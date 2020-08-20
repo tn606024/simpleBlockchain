@@ -667,7 +667,7 @@ func (s *Server) sendVersion(addr string){
 		fmt.Printf("%v", err)
 		return
 	}
-	logSendMsg(VersionMsgHeader, &versionMsg)
+	logSendMsg(VersionMsgHeader, addr, &versionMsg)
 	err = s.send(addr, data)
 	if err != nil {
 		fmt.Printf("%v\n", err)
@@ -687,7 +687,7 @@ func (s *Server) sendVerack(addr string){
 		fmt.Printf("%v", err)
 		return
 	}
-	logSendMsg(VerackMsgHeader, &verackMsg)
+	logSendMsg(VerackMsgHeader, addr, &verackMsg)
 	err = s.send(addr, msg)
 	if err == nil{
 		s.mutex.Lock()
@@ -709,7 +709,7 @@ func (s *Server) sendGetblocks(addr string){
 		fmt.Printf("%v", err)
 		return
 	}
-	logSendMsg(GetBlocksMsgHeader, &getblocksMsg)
+	logSendMsg(GetBlocksMsgHeader, addr, &getblocksMsg)
 	s.send(addr, msg)
 }
 
@@ -719,7 +719,7 @@ func (s *Server) sendInv(addr string, inv *InvMsg){
 		fmt.Printf("%v", err)
 		return
 	}
-	logSendMsg(InvMsgHeader, inv)
+	logSendMsg(InvMsgHeader, addr, inv)
 	s.send(addr, msg)
 }
 
@@ -729,7 +729,7 @@ func (s *Server) sendGetData(addr string, getdatamsg *GetdataMsg){
 		fmt.Printf("%v", err)
 		return
 	}
-	logSendMsg(GetDataMsgHeader, getdatamsg)
+	logSendMsg(GetDataMsgHeader, addr, getdatamsg)
 	s.send(addr, msg)
 }
 
@@ -747,7 +747,7 @@ func (s *Server) sendBlock(addr string, blk *Block){
 		fmt.Printf("%v", err)
 		return
 	}
-	logSendMsg(BlockMsgHeader, &blockMsg)
+	logSendMsg(BlockMsgHeader, addr, &blockMsg)
 	s.send(addr, msg)
 }
 
@@ -762,7 +762,7 @@ func (s *Server) sendTx(addr string, tx *Transaction){
 		fmt.Printf("%v", err)
 		return
 	}
-	logSendMsg(TxMsgHeader, &txMsg)
+	logSendMsg(TxMsgHeader,addr, &txMsg)
 	s.send(addr, msg)
 }
 
@@ -814,7 +814,7 @@ func logHandleMsg(header MessageHeader, msg logmsg){
 	fmt.Printf("msg:%s\n",msg.String())
 }
 
-func logSendMsg(header MessageHeader, msg logmsg){
-	fmt.Printf("send %s msg\n", header)
+func logSendMsg(header MessageHeader, to string, msg logmsg){
+	fmt.Printf("send %s msg to %s\n", header, to)
 	fmt.Printf("msg:%s\n",msg.String())
 }
