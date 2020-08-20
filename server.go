@@ -212,11 +212,7 @@ func (s *Server) StartServer() {
 	}
 	defer ln.Close()
 	go s.StartApiServer(s.apiport)
-	for _, knownNode := range KnownNodes {
-		if knownNode != s.node {
-			s.sendVersion(knownNode)
-		}
-	}
+	s.broadcastVersion()
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -407,6 +403,13 @@ func (s *Server) MiningEmptyBlockAndBroadcast() (*Block,error) {
 	}
 	s.broadcastBlock(blk)
 	return blk, nil
+}
+func (s *Server) broadcastVersion(){
+	for _, knownNode := range s.knownNodes {
+		if knownNode != s.node {
+			s.sendVersion(knownNode)
+		}
+	}
 }
 
 func (s *Server) broadcastBlock(block *Block){
@@ -781,16 +784,6 @@ func (s *Server) send(addr string, data []byte) error{
 	}
 	return nil
 }
-
-//func (s *Server) deleteKnownNodes(node string){
-//	var update []string
-//	for _, knownNode := range s.knownNodes {
-//		if knownNode != node {
-//			update = append(update, knownNode)
-//		}
-//	}
-//	s.knownNodes = update
-//}
 
 func contructMsg(header MessageHeader, payload interface{}) ([]byte, error){
 	var msg Msg
