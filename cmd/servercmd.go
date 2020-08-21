@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/ian/simpleBlockchain"
+	"github.com/tn606024/simpleBlockchain"
 	"github.com/urfave/cli/v2"
 	"os"
 )

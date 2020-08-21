@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/ian/simpleBlockchain/cmd"
+	"github.com/tn606024/simpleBlockchain/cmd"
 	"github.com/urfave/cli/v2"
 	"os"
 )

@@ -1,4 +1,4 @@
-module github.com/ian/simpleBlockchain
+module github.com/tn606024/simpleBlockchain
 
 go 1.14
 
