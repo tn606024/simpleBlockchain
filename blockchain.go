@@ -247,7 +247,6 @@ func (bc *BlockChain) AddBlock(block *Block) error {
 	blocks := bc.OrganizeBlockPool(block)
 	for _, block := range blocks {
 		if block.BlockHeader.Height == bc.height+1 {
-			fmt.Printf("put block %d\n",block.BlockHeader.Height)
 			err := bc.putBlock(block)
 			if err != nil {
 				return err

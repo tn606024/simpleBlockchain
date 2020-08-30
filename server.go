@@ -150,6 +150,7 @@ type Server struct {
 	blockMap	map[string]int
 	blockchain	*BlockChain
 	mutex		sync.Mutex
+	reorg		bool
 }
 
 
@@ -504,8 +505,12 @@ func (s *Server) handleVerack(payload json.RawMessage){
 	}
 	s.mutex.Lock()
 	block := s.blockMap[from]
+	reorg := s.reorg
 	s.mutex.Unlock()
-	if block > height {
+	if block > height && reorg == false{
+		s.mutex.Lock()
+		s.reorg = true
+		s.mutex.Unlock()
 		s.sendGetblocks(from)
 	}
 }
@@ -554,6 +559,9 @@ func (s *Server) handleInv(payload json.RawMessage){
 		if err != nil {
 			fmt.Printf("ReOrg blockchain happened error:%v", err)
 		}
+		s.mutex.Lock()
+		s.reorg = false
+		s.mutex.Unlock()
 		fmt.Println("ReOrg done")
 		switch invMsg.Type {
 		case "block":
@@ -637,6 +645,7 @@ func (s *Server) handleBlock(payload json.RawMessage){
 			}
 			s.ScanWalletUTXOs()
 		}
+
 	} else {
 		s.sendVersion(blockMsg.AddrFrom)
 	}
