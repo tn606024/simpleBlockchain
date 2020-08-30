@@ -206,6 +206,31 @@ func NewKnownNodes(port int) ([]string, error){
 	return knownNodes, nil
 }
 
+func (s *Server) AddKnownNode(knownNode string) error{
+	s.mutex.Lock()
+	s.knownNodes = append(s.knownNodes, knownNode)
+	bkn, _ := json.Marshal(s.knownNodes)
+	s.mutex.Unlock()
+	nodefile := fmt.Sprintf(knownNodeName, s.nodeport)
+	err := ioutil.WriteFile(nodefile, bkn, 0644)
+	if err != nil {
+		return  err
+	}
+	return nil
+}
+
+func (s *Server) SearchKnownNode(knownNode string) bool {
+	s.mutex.Lock()
+	for _, node := range s.knownNodes{
+		if node == knownNode{
+			s.mutex.Unlock()
+			return true
+		}
+	}
+	s.mutex.Unlock()
+	return false
+}
+
 func (s *Server) StartServer() {
 	ln, err := net.Listen(protocal, s.node)
 	if err != nil {
@@ -467,6 +492,9 @@ func (s *Server) handleVersion(payload json.RawMessage){
 	}
 	logHandleMsg(VersionMsgHeader, &versionMsg)
 	if versionMsg.Version == blockchainVersion {
+		if !s.SearchKnownNode(versionMsg.AddrFrom) {
+			s.AddKnownNode(versionMsg.AddrFrom)
+		}
 		s.mutex.Lock()
 		s.blockMap[versionMsg.AddrFrom] = versionMsg.StartHeight
 		conn, ok := s.connectMap[versionMsg.AddrFrom]
