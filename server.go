@@ -118,8 +118,8 @@ func (msg *TxMsg) String() string{
 }
 
 type BlockMsg struct {
-	AddrFrom	string				`json:"addr_from"`
-	Block		Hashes				`json:"block"`
+	AddrFrom	string					`json:"addr_from"`
+	Block		[]Hashes				`json:"block"`
 }
 
 func (msg *BlockMsg) String() string{
@@ -415,7 +415,7 @@ func (s *Server) broadcastVersion(){
 func (s *Server) broadcastBlock(block *Block){
 	for _, knownNode := range s.knownNodes{
 		if knownNode != s.node {
-			s.sendBlock(knownNode, block)
+			s.sendBlock(knownNode, []*Block{block})
 		}
 	}
 }
@@ -592,6 +592,7 @@ func (s *Server) handleInv(payload json.RawMessage){
 
 func (s *Server) handleGetData(payload json.RawMessage){
 	var getDataMsg GetdataMsg
+	blocks := make([]*Block,0)
 	err := json.Unmarshal(payload, &getDataMsg)
 	if err != nil {
 		fmt.Printf("json unmarshal error: %s\n", err)
@@ -602,8 +603,10 @@ func (s *Server) handleGetData(payload json.RawMessage){
 	case "block":
 		for _, hash := range getDataMsg.Hash {
 			blk := s.blockchain.getBlockByHash(hash)
-			s.sendBlock(getDataMsg.AddrFrom, blk)
+			blocks = append(blocks, blk)
 		}
+		s.sendBlock(getDataMsg.AddrFrom, blocks)
+
 	case "tx":
 		for _, hash := range getDataMsg.Hash {
 			tx := s.blockchain.findTransaction(hash)
@@ -612,17 +615,28 @@ func (s *Server) handleGetData(payload json.RawMessage){
 	}
 }
 
+
 func (s *Server) handleBlock(payload json.RawMessage){
 	var blockMsg BlockMsg
+	blocks := make([]*Block,0 )
 	err := json.Unmarshal(payload, &blockMsg)
 	if err != nil {
 		fmt.Printf("json unmarshal error: %s\n", err)
 	}
 	logHandleMsg(BlockMsgHeader, &blockMsg)
-	blk,_ := DeserializeBlock(blockMsg.Block)
+	for _, bblock := range blockMsg.Block {
+		blk, _ := DeserializeBlock(bblock)
+		blocks = append(blocks, blk)
+	}
 	if s.connectMap[blockMsg.AddrFrom] == true {
-		s.blockchain.AddBlock(blk)
-		s.ScanWalletUTXOs()
+		for _, block := range blocks {
+			err := s.blockchain.AddBlock(block)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			s.ScanWalletUTXOs()
+		}
 	} else {
 		s.sendVersion(blockMsg.AddrFrom)
 	}
@@ -736,14 +750,19 @@ func (s *Server) sendGetData(addr string, getdatamsg *GetdataMsg){
 	s.send(addr, msg)
 }
 
-func (s *Server) sendBlock(addr string, blk *Block){
-	bblk, err := blk.Serialize()
-	if err != nil{
-		fmt.Printf("%v/n", err)
+func (s *Server) sendBlock(addr string, blks []*Block){
+	bblks := make([]Hashes, 0)
+	for _, blk := range blks {
+		bblk, err := blk.Serialize()
+		if err != nil{
+			fmt.Printf("%v/n", err)
+		}
+		bblks = append(bblks, bblk)
 	}
+
 	blockMsg := BlockMsg{
 		AddrFrom: s.node,
-		Block: bblk,
+		Block: bblks,
 	}
 	msg, err := contructMsg(BlockMsgHeader, blockMsg)
 	if err != nil{

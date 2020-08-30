@@ -9,6 +9,7 @@ import (
 	"github.com/boltdb/bolt"
 	"log"
 	"math/big"
+	"sync"
 )
 
 var genesisBlock = &Block{
@@ -81,6 +82,8 @@ type BlockChain struct {
 	top []byte
 	isMining bool
 	utxosMap map[string][]*UTXO
+	blockpool map[int]*Block
+	mutex	sync.Mutex
 }
 
 func NewBlockChain(address string, port int, isMining bool) *BlockChain {
@@ -99,6 +102,7 @@ func NewBlockChain(address string, port int, isMining bool) *BlockChain {
 		db: db,
 		miner: address,
 		isMining: isMining,
+		blockpool: make(map[int]*Block,0),
 	}
 	err = db.View(func(tx *bolt.Tx) error {
 		top := tx.Bucket([]byte("DB")).Get([]byte("top"))
@@ -132,17 +136,18 @@ func CreateBlockChain(address string, port int, isMining bool) *BlockChain {
 		db: db,
 		miner: address,
 		isMining: isMining,
+		blockpool: make(map[int]*Block,0),
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucket([]byte("DB"))
+		_, err := tx.CreateBucketIfNotExists([]byte("DB"))
 		if err != nil {
 			panic(err)
 		}
-		_, err  = tx.CreateBucket([]byte("Index"))
+		_, err  = tx.CreateBucketIfNotExists([]byte("Index"))
 		if err != nil {
 			panic(err)
 		}
-		_, err = tx.CreateBucket([]byte("UTXO"))
+		_, err = tx.CreateBucketIfNotExists([]byte("UTXO"))
 		if err != nil {
 			panic(err)
 		}
@@ -219,24 +224,46 @@ func (bc *BlockChain) MiningEmptyBlock(miner string) (*Block, error){
 
 }
 
-func (bc *BlockChain) AddBlock(block *Block) error {
-	if block.BlockHeader.Height == bc.height + 1 {
-		err := bc.putBlock(block)
-		if err != nil {
-			return err
+func (bc *BlockChain) OrganizeBlockPool(block *Block) []*Block{
+	if len(bc.blockpool) == 0 && bc.height+1 == block.BlockHeader.Height {
+		return []*Block{
+			block,
 		}
-		err = bc.ReIndexUTXO()
-		if err != nil {
-			return err
-		}
-		allutxos, err := bc.getUTXOs()
-		if err != nil {
-			return err
-		}
-		bc.utxosMap = allutxos
-	}else {
-		return fmt.Errorf("missing block height: %d", bc.height + 1)
+	}
+	blocks := make([]*Block, 0)
+	bc.mutex.Lock()
+	height := bc.height + 1
+	bc.blockpool[block.BlockHeader.Height] = block
+	for block, ok := bc.blockpool[height]; ok;{
+		blocks = append(blocks, block)
+		delete(bc.blockpool, height)
+		height++
+	}
+	bc.mutex.Unlock()
+	return blocks
+}
 
+func (bc *BlockChain) AddBlock(block *Block) error {
+	blocks := bc.OrganizeBlockPool(block)
+	for _, block := range blocks {
+		if block.BlockHeader.Height == bc.height+1 {
+			fmt.Printf("put block %d\n",block.BlockHeader.Height)
+			err := bc.putBlock(block)
+			if err != nil {
+				return err
+			}
+			err = bc.ReIndexUTXO()
+			if err != nil {
+				return err
+			}
+			allutxos, err := bc.getUTXOs()
+			if err != nil {
+				return err
+			}
+			bc.utxosMap = allutxos
+		} else {
+			return fmt.Errorf("missing block height: %d", bc.height+1)
+		}
 	}
 	return nil
 }
