@@ -338,7 +338,9 @@ func (s *Server) ScanWalletUTXOs() error{
 
 		}
 	}
+	s.mutex.Lock()
 	s.utxos = utxos
+	s.mutex.Unlock()
 	return nil
 }
 
@@ -409,6 +411,7 @@ func (s *Server) SendTransaction(amount int, to string) (*Transaction, error){
 	}
 	if s.blockchain.isMining {
 		block, err := s.blockchain.mining(s.blockchain.miner,GenesisBits,[]*Transaction{tx})
+		s.ScanWalletUTXOs()
 		if err != nil {
 			return nil, err
 		}
