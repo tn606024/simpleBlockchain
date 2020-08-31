@@ -450,6 +450,7 @@ func (s *Server) broadcastBlock(block *Block){
 	}
 }
 
+
 func (s *Server) broadcastTx(tx *Transaction){
 	for _, knownNode := range s.knownNodes{
 		if knownNode != s.node {
@@ -532,8 +533,10 @@ func (s *Server) handleVerack(payload json.RawMessage){
 		return
 	}
 	if conn == false {
-		s.sendVerack(from)
-		return
+		err := s.sendVerack(from)
+		if err != nil{
+			return
+		}
 	}
 	s.mutex.Lock()
 	block := s.blockMap[from]
@@ -559,12 +562,13 @@ func (s *Server) handleGetBlocks(payload json.RawMessage){
 	myhashes := s.blockchain.getBlockHashes(false)
 	reorgHeight := len(hashes) -1
 	for i, hash := range hashes {
-		if bytes.Compare(myhashes[i],(hash)) != 0 {
+		if bytes.Compare(myhashes[i], hash) != 0 {
 			if i == 0 {
 				reorgHeight = 0
 			}else {
 				reorgHeight = i-1
 			}
+			break
 		}
 	}
 
@@ -736,22 +740,25 @@ func (s *Server) sendVersion(addr string){
 	s.mutex.Unlock()
 }
 
-func (s *Server) sendVerack(addr string){
+func (s *Server) sendVerack(addr string) error{
 	verackMsg := VerackMsg{
 		AddrFrom:s.node,
 	}
 	msg, err := contructMsg(VerackMsgHeader, verackMsg)
 	if err != nil{
 		fmt.Printf("%v", err)
-		return
+		return err
 	}
 	logSendMsg(VerackMsgHeader, addr, &verackMsg)
 	err = s.send(addr, msg)
-	if err == nil{
-		s.mutex.Lock()
-		s.connectMap[addr] = true
-		s.mutex.Unlock()
+	if err != nil{
+		fmt.Printf("%v", err)
+		return err
 	}
+	s.mutex.Lock()
+	s.connectMap[addr] = true
+	s.mutex.Unlock()
+	return nil
 }
 
 func (s *Server) sendGetblocks(addr string){
