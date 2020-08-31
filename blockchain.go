@@ -179,8 +179,6 @@ func (bc *BlockChain) ReOrg(blockHash []byte) error{
 func (bc *BlockChain) ReOrgBlockchain(blockHash []byte) error{
 	hashes := bc.getBlockHashesAfterHash(blockHash)
 	blk := bc.getBlockByHash(blockHash)
-	fmt.Printf("hash:%x\n", blockHash)
-	fmt.Printf("Reorg blk: %s\n", blk.String())
 	err := bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("DB"))
 		for _, hash := range hashes{
