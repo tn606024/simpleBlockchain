@@ -44,14 +44,20 @@ func (c *Conn) get(route string, result interface{}) error {
 	if err != nil {
 		return err
 	}
-	var response Response
-	err = json.Unmarshal(resBody, &response)
-	if err != nil {
-		return fmt.Errorf("json unmarshal resbody error: %v\n", err)
-	}
-	err = json.Unmarshal(response.Result, result)
-	if err != nil {
-		return fmt.Errorf("json Unmarshal response result error: %v\n", err)
+	switch res.StatusCode {
+	case 200:
+		var response Response
+		err = json.Unmarshal(resBody, &response)
+		if err != nil {
+			return fmt.Errorf("json unmarshal resbody error: %v\n", err)
+		}
+		err = json.Unmarshal(response.Result, result)
+		if err != nil {
+			return fmt.Errorf("json Unmarshal response result error: %v\n", err)
+		}
+		return nil
+	case 500:
+		return fmt.Errorf("%s\n",string(resBody))
 	}
 	return nil
 }

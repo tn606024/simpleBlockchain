@@ -284,6 +284,7 @@ func (s *Server) StartApiServer(apiport int) {
 		blk, err := s.MiningEmptyBlockAndBroadcast()
 		if err != nil {
 			c.String(http.StatusInternalServerError, "server error occured: %s", err)
+			return
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"result": blk,
@@ -423,7 +424,7 @@ func (s *Server) SendTransaction(amount int, to string) (*Transaction, error){
 }
 
 func (s *Server) MiningEmptyBlockAndBroadcast() (*Block,error) {
-	if s.blockchain.isMining == false{
+	if s.blockchain.isMining == false {
 		return nil, fmt.Errorf("isMining is set false")
 	}
 	blk, err := s.blockchain.MiningEmptyBlock(s.blockchain.miner)
