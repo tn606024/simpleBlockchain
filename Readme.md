@@ -42,7 +42,7 @@ go build ./cmd/cli
 
 ### Send Transaction to other address
 ```shell script
-./cli server sendTransaction --apiport 8080 --to "172wJyiJZxXWyBW7CYSVddsR5e7ZMxtja9" -amount 100000
+./cli server sendtransaction --apiport 8080 --to "172wJyiJZxXWyBW7CYSVddsR5e7ZMxtja9" -amount 100000
 ```
 
 threr are still have other blockchain command, you can find out by type `./cli server`.
@@ -108,7 +108,7 @@ Example
 ### Send transaction
 
  ```shell script
-./cli server sendTransaction --apiport 8080 --to "172wJyiJZxXWyBW7CYSVddsR5e7ZMxtja9" -amount 100000
+./cli server sendtransaction --apiport 8080 --to "172wJyiJZxXWyBW7CYSVddsR5e7ZMxtja9" -amount 100000
  ```
 
 ### Mining block

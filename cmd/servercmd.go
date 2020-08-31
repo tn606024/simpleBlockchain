@@ -202,7 +202,7 @@ var (
 		},
 	}
 	sendTransactionSubCommand = &cli.Command{
-		Name:	"sendTransaction",
+		Name:	"sendtransaction",
 		Usage:	"create Transaction and broadcast to other node",
 		Description: "create Transaction and broadcast to other node",
 		ArgsUsage: 	 "<apiport><to><amount>",
