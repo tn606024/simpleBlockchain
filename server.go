@@ -668,7 +668,7 @@ func (s *Server) handleBlock(payload json.RawMessage){
 		blk, _ := DeserializeBlock(bblock)
 		blocks = append(blocks, blk)
 	}
-	if s.connectMap[blockMsg.AddrFrom] == true {
+	if s.connectMap[blockMsg.AddrFrom] == true && bytes.Compare(blocks[0].BlockHeader.PrevBlock, s.blockchain.top) == 0{
 		for _, block := range blocks {
 			err := s.blockchain.AddBlock(block)
 			if err != nil {

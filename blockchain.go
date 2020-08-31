@@ -230,6 +230,9 @@ func (bc *BlockChain) OrganizeBlockPool(block *Block) []*Block{
 			block,
 		}
 	}
+	if bc.height >= block.BlockHeader.Height {
+		return []*Block{}
+	}
 	blocks := make([]*Block, 0)
 	bc.mutex.Lock()
 	height := bc.height + 1
