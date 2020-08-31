@@ -427,6 +427,7 @@ func (s *Server) MiningEmptyBlockAndBroadcast() (*Block,error) {
 		return nil, fmt.Errorf("isMining is set false")
 	}
 	blk, err := s.blockchain.MiningEmptyBlock(s.blockchain.miner)
+	s.ScanWalletUTXOs()
 	if err != nil {
 		return nil, err
 	}
