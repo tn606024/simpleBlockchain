@@ -703,6 +703,7 @@ func (s *Server) handleTx(payload json.RawMessage) {
 		return
 	}
 	blk, err := s.blockchain.mining(s.blockchain.miner, GenesisBits, []*Transaction{tx})
+	s.ScanWalletUTXOs()
 	if err != nil {
 		fmt.Printf("mining block occured error:%v", err)
 	}
